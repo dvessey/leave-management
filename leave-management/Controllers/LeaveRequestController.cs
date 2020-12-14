@@ -95,6 +95,7 @@ namespace leave_management.Controllers
 
                 leaveRequest.Approved = true;
                 leaveRequest.AprrovedById = user.Id;
+           
                 leaveRequest.DateActioned = DateTime.Now;
 
                 _leaveRequestRepo.Update(leaveRequest);
