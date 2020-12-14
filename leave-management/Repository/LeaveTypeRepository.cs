@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace leave_management.Repository
 {
@@ -16,28 +17,28 @@ namespace leave_management.Repository
             _db = db;
         }
 
-        public bool Create(LeaveType entity)
+        public async Task<bool> Create(LeaveType entity)
         {
-            _db.LeaveTypes.Add(entity);
-            return Save();
+            await _db.LeaveTypes.AddAsync(entity);
+            return await Save();
         }
 
-        public bool Delete(LeaveType entity)
+        public async Task<bool> Delete(LeaveType entity)
         {
-            _db.LeaveTypes.Remove(entity);
-            return Save();
+             _db.LeaveTypes.Remove(entity);
+            return await Save();
         }
 
-        public ICollection<LeaveType> findAll()
+        public async Task<ICollection<LeaveType>> findAll()
         {
             //functions like SELECT * FROM LeaveTypes
-           var leaveTypes = _db.LeaveTypes.ToList();
+           var leaveTypes = await _db.LeaveTypes.ToListAsync();
            return leaveTypes;
         }
 
-        public LeaveType FindById(int id)
+        public async Task<LeaveType> FindById(int id)
         {
-            var leaveType = _db.LeaveTypes.Find(id);
+            var leaveType = await _db.LeaveTypes.FindAsync(id);
             return leaveType;
         }
 
@@ -46,22 +47,22 @@ namespace leave_management.Repository
             throw new NotImplementedException();
         }
 
-        public bool isExists(int id)
+        public async Task<bool> isExists(int id)
         {
-            var exists = _db.LeaveTypes.Any(q => q.Id == id);
+            var exists = await _db.LeaveTypes.AnyAsync(q => q.Id == id);
             return exists;
         }
 
-        public bool Save()
+        public async Task<bool> Save()
         {
-            var changes =  _db.SaveChanges(); //returns an integer of how many records were saved
+            var changes =  await _db.SaveChangesAsync(); //returns an integer of how many records were saved
             return changes > 0;
         }
 
-        public bool Update(LeaveType entity)
+        public async Task<bool> Update(LeaveType entity)
         {
             _db.LeaveTypes.Update(entity);
-            return Save();
+            return await Save();
         }
     }
 }
