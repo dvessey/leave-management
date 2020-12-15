@@ -16,20 +16,17 @@ namespace leave_management.Controllers
     [Authorize(Roles = "Administrator")]
     public class LeaveAllocationController : Controller
     {
-        private readonly ILeaveTypeRepository _leaverepo;
-        private readonly ILeaveAllocationRepository _leaveallocationrepo;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly UserManager<Employee> _userManager;
 
         public LeaveAllocationController(
-            ILeaveTypeRepository leaverepo, 
-            ILeaveAllocationRepository leaveallocationrepo,
+            IUnitOfWork unitOfWork,
             IMapper mapper,
             UserManager<Employee> userManager
             )
         {
-            _leaverepo = leaverepo;
-            _leaveallocationrepo = leaveallocationrepo;
+            _unitOfWork = unitOfWork;
             _mapper = mapper;
             _userManager = userManager;
         }
@@ -37,7 +34,7 @@ namespace leave_management.Controllers
         // GET: LeaveAllocationController
         public async Task<ActionResult> Index()
         {
-            var leaveTypes = await _leaverepo.findAll();
+            var leaveTypes = await _unitOfWork.LeaveTypes.FindAll();
             var mappedLeaveTypes = _mapper.Map<List<LeaveType>, List<LeaveTypeViewModel>>(leaveTypes.ToList());
             var model = new CreateLeaveAllocationViewModel
             {
@@ -49,11 +46,15 @@ namespace leave_management.Controllers
 
         public async Task<ActionResult> SetLeave(int id)
         {
-            var leaveType = await _leaverepo.FindById(id);
+            var leaveType = await _unitOfWork.LeaveTypes.Find(q => q.Id == id);
             var employees = await _userManager.GetUsersInRoleAsync("Employee");
+            var period = DateTime.Now.Year;           
             foreach (var emp in employees)
             {
-                if (await _leaveallocationrepo.CheckAllocation(id, emp.Id))
+                //if (await _leaveallocationrepo.CheckAllocation(id, emp.Id))
+                if (await _unitOfWork.LeaveAllocations.isExists(q => q.EmployeeId == emp.Id
+                                                    && q.LeaveTypeId == id
+                                                    && q.Period == period))
                     continue;
                 var allocation = new LeaveAllocationViewModel
                 {
@@ -64,7 +65,7 @@ namespace leave_management.Controllers
                     Period = DateTime.Now.Year
                 };
                 var leaveallocation = _mapper.Map<LeaveAllocation>(allocation);
-                await _leaveallocationrepo.Create(leaveallocation);
+                await _unitOfWork.LeaveAllocations.Create(leaveallocation);
             }
             return RedirectToAction(nameof(Index));
         }
@@ -80,7 +81,14 @@ namespace leave_management.Controllers
         public async Task<ActionResult> Details(string id)
         {
             var employee = _mapper.Map<EmployeeViewModel>(await _userManager.FindByIdAsync(id));
-            var allocations = _mapper.Map<List<LeaveAllocationViewModel>>(await _leaveallocationrepo.GetLeaveAllocationsByEmployee(id));
+            var period = DateTime.Now.Year;
+            var records = await _unitOfWork.LeaveAllocations.FindAll(
+                expression: q => q.EmployeeId == id && q.Period == period,
+                includes: new List<string> { "LeaveType" }
+             );
+
+            var allocations = _mapper.Map<List<LeaveAllocationViewModel>>
+                (records);
 
             var model = new ViewAllocationsViewModel
             {
@@ -114,7 +122,8 @@ namespace leave_management.Controllers
         // GET: LeaveAllocationController/Edit/5
         public async Task<ActionResult> Edit(int id)
         {
-            var leaveAllocation = await _leaveallocationrepo.FindById(id);
+            var leaveAllocation = await _unitOfWork.LeaveAllocations.Find(q => q.Id == id,
+                    includes: new List<string> { "Employee", "LeaveType" });
             var model = _mapper.Map<EditLeaveAllocationViewModel>(leaveAllocation);
             return View(model);
         }
@@ -130,15 +139,12 @@ namespace leave_management.Controllers
                 {
                     return View(model);
                 }
-                var record = await _leaveallocationrepo.FindById(model.Id);
+                var record = await _unitOfWork.LeaveAllocations.Find(q => q.Id == model.Id);
                 record.NumberOfDays = model.NumberOfDays;
 
-                var isSuccess = await _leaveallocationrepo.Update(record);
-                if (!isSuccess)
-                {
-                    ModelState.AddModelError("", "Error while saving...");
-                    return View(model);
-                }
+                _unitOfWork.LeaveAllocations.Update(record);
+                await _unitOfWork.Save();               
+
                 return RedirectToAction(nameof(Details), new { id = model.EmployeeId });
             }
             catch
@@ -166,6 +172,12 @@ namespace leave_management.Controllers
             {
                 return View();
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            _unitOfWork.Dispose();
+            base.Dispose(disposing);
         }
     }
 }

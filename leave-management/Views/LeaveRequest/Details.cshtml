@@ -20,7 +20,7 @@
 else if (Model.Approved == true)
 {
     <div class="alert alert-success" role="alert">
-        <h4 class="alert-heading">Approved @*by @Model.AprrovedBy.FirstName @Model.AprrovedBy.LastName*@</h4>
+        <h4 class="alert-heading">Approved @* by @Model.AprrovedBy.FirstName @Model.AprrovedBy.LastName*@</h4>
         <p>
             <strong>@Html.DisplayNameFor(model => model.RequestingEmployeeId):</strong> @Model.RequestingEmployee.FirstName @Model.RequestingEmployee.LastName
         </p>
@@ -33,7 +33,7 @@ else if (Model.Approved == true)
 else
 {
     <div class="alert alert-danger" role="alert">
-        <h4 class="alert-heading">Rejected @*by  @Model.AprrovedBy.FirstName @Model.AprrovedBy.LastName*@</h4>
+        <h4 class="alert-heading">Rejected @* by @Model.AprrovedBy.FirstName @Model.AprrovedBy.LastName*@</h4>
         <p>
             <strong>@Html.DisplayNameFor(model => model.RequestingEmployeeId):</strong> @Model.RequestingEmployee.FirstName @Model.RequestingEmployee.LastName
         </p>

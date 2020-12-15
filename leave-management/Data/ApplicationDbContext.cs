@@ -22,7 +22,6 @@ namespace leave_management.Data
 
         public DbSet<LeaveAllocation> LeaveAllocations { get; set; }
 
-        public DbSet<leave_management.Models.LeaveRequestViewModel> LeaveRequestViewModel { get; set; }
 
     }
 }

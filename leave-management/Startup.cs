@@ -35,9 +35,7 @@ namespace leave_management
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
             //Add references for Repository and Contracts to Startup file
-            services.AddScoped<ILeaveTypeRepository, LeaveTypeRepository>();
-            services.AddScoped<ILeaveAllocationRepository, LeaveAllocationRepository>();
-            services.AddScoped<ILeaveRequestRepository, LeaveRequestRepository>();
+            services.AddTransient<IUnitOfWork, UnitOfWork>();
             services.AddAutoMapper(typeof(Maps));
             services.AddDefaultIdentity<Employee>()
                 .AddRoles<IdentityRole>()
